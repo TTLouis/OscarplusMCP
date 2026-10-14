@@ -1,0 +1,8 @@
+# Build context allowlist: the Dockerfile only needs these source inputs.
+**
+!Dockerfile
+!package.json
+!package-lock.json
+!tsconfig.json
+!src/
+!src/*.ts

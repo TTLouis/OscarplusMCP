@@ -1,0 +1,57 @@
+# Dependencies, generated code and test output
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+playwright-report/
+test-results/
+.playwright-cli/
+
+# Local environment and credentials; only the empty template is public
+.env
+.env.*
+!.env.example
+.npmrc
+secrets/
+credentials*.json
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Authenticated browser state and profiles
+auth-profile/
+browser-profile/
+storage-state*.json
+storageState*.json
+session.json
+cookies*.json
+
+# Posting caches, databases and private exports
+data/*
+!data/.gitkeep
+*.sqlite*
+*.db
+*.db-*
+backups/
+exports/
+captures/
+
+# Network captures, diagnostics and archives can contain private data
+*.har
+*.saz
+*.log
+logs/
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.bak
+*.tmp
+
+# Local editor and OS files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+Desktop.ini
