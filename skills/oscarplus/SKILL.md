@@ -11,7 +11,7 @@ Use the user's connected OscarplusMCP tools for authorized posting research. Thi
 
 Discover the actual available tool names; a client may prefix the names below with a server namespace. If the tools are missing, report the missing connection instead of pretending to query postings.
 
-For an explicit deployment request, locate the repository and read its README.md, docs/TERMS_REVIEW.md, compose.yml and .env.example. Follow its deployment instructions using the user's own account and authorized host. Preserve existing configuration and data. Keep secrets out of chat, logs and Git; have the user enter credentials directly into the local .env. Never print that file or resolved Compose environment values.
+For an explicit deployment request, locate the repository and read its README.md, docs/getting-started/deployment.md, docs/getting-started/authentication.md, docs/getting-started/agent-setup.md, docs/project/terms-review.md, compose.yml and .env.example. Follow its deployment instructions using the user's own account and authorized host. Preserve existing configuration and data. Keep secrets out of chat, logs and Git; have the user enter credentials directly into the local .env. Never print that file or resolved Compose environment values.
 
 The container runs as UID/GID 1000:1000 and needs writable private data/ and auth-profile/ bind mounts. The example disables live ingestion and auto-sync. When enabled, live ingestion requires OSCARPLUS_USERNAME and OSCARPLUS_PASSWORD, reuses saved browser state, and can initiate a Microsoft MFA phone call when reauthentication is needed. Tell the user before starting the first sync so they can answer. Do not repeatedly retry failed authentication. Other MFA methods are not implemented by the current adapter.
 

@@ -1,5 +1,7 @@
 # Publication review
 
+[Back to the project overview](../../README.md)
+
 Reviewed October 14, 2026. This is a limited source review, not legal clearance.
 
 ## Sources checked
