@@ -6,7 +6,8 @@ Paste this into an agent with terminal access to your deployment host and permis
 
 ```text
 Deploy OscarplusMCP from https://github.com/TTLouis/OscarplusMCP.git on
-[local Linux host or SSH host] in [repository directory], then connect my
+[Windows PC with Docker Desktop, local Linux host, or SSH host] in
+[repository directory], then connect my
 [MCP client name] and install the bundled oscarplus agent skill in
 [the skills directory supported by my agent].
 
@@ -17,9 +18,21 @@ Use my own authorized account and respect applicable portal terms. If the
 private repository is inaccessible, report that rather than using someone
 else's credentials. Preserve existing deployment data and configuration.
 
+Detect my OS and choose the matching deployment-guide instructions.
+On Windows, use PowerShell and Docker Desktop with the WSL 2 backend and
+Linux containers; a separate Linux computer or server is not required.
+Check WSL and Docker Desktop prerequisites against Docker's official guide.
+If installation, a Windows feature change or a reboot is needed, explain
+the required user action and resume after it is complete. Do not accept
+installer terms or reboot the computer on my behalf. Start Docker Desktop
+and confirm its engine is ready, docker info reports linux, and docker
+compose version works. Do not run sudo, chmod or chown in PowerShell.
+
 Check Docker/Compose availability and port 3100. Clone or update the source
-without discarding local changes. Prepare data/ and auth-profile/ so the
-container's UID/GID 1000:1000 can write to them, with private permissions.
+without discarding local changes. Prepare data/ and auth-profile/ using
+PowerShell and Windows permissions on Windows, or Linux UID/GID 1000:1000
+ownership and private permissions on Linux. Verify both mounts are writable
+by the container user before starting the live service.
 Create .env from .env.example only if it does not already exist. Have me
 enter OSCARPLUS_USERNAME and OSCARPLUS_PASSWORD directly into the local
 file; never ask me to paste them into chat, print .env, run a command that

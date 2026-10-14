@@ -13,7 +13,7 @@ Postings sync in the background, every four hours by default. Answers reflect th
 
 ## Get started
 
-You need an authorized OSCARplus Engineering Co-op account, a Linux host with Docker Compose, and an assistant that supports MCP. The current login integration supports Microsoft's phone-call MFA.
+You need an authorized OSCARplus Engineering Co-op account, an assistant that supports MCP, and either **Windows with Docker Desktop** or a Linux host with Docker Compose. The current login integration supports Microsoft's phone-call MFA.
 
 1. [Deploy the service](docs/getting-started/deployment.md), or give your agent the [ready-to-copy setup prompt](docs/getting-started/setup-prompt.md).
 2. [Connect your assistant and install the bundled skill](docs/getting-started/agent-setup.md).

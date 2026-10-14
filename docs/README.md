@@ -4,7 +4,7 @@
 
 ## Getting started
 
-- [Deployment](getting-started/deployment.md): prerequisites, Docker setup, configuration and persistent storage.
+- [Deployment](getting-started/deployment.md): Windows with Docker Desktop or Linux, configuration and persistent storage.
 - [Authentication](getting-started/authentication.md): credentials, phone-call MFA and saved sessions.
 - [Agent setup](getting-started/agent-setup.md): connect an MCP client and install the bundled skill.
 - [Setup prompt](getting-started/setup-prompt.md): a complete prompt for an agent to deploy and configure the service.
