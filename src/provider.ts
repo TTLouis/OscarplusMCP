@@ -1,12 +1,14 @@
 import type { RawPosting } from './model.js';
 import { chmodSync, existsSync } from 'node:fs';
 import { chromium, type Browser, type BrowserContext, type Page } from 'playwright';
+import { authenticate, AuthenticationError, initialAuthenticationStatus, type AuthenticationStatus, type AuthSnapshot } from './authentication.js';
 export interface PostingSummary { posting_id: string; source_revision?: string | null }
 export interface OscarPlusProvider {
   ensureAuthenticated(): Promise<void>;
   listPostings(): Promise<PostingSummary[]>;
   getPosting(postingId: string): Promise<RawPosting>;
   close?(): Promise<void>;
+  authenticationStatus?(): AuthenticationStatus;
 }
 // Never treat a truncated, duplicated or unexpectedly empty page as a complete crawl.
 export async function collectListingRows<T extends { posting_id: string }>(expected: number,
@@ -79,17 +81,29 @@ export class LiveOscarPlusProvider implements OscarPlusProvider {
   private page: Page | null = null;
   private listing = new Map<string, Listing>();
   private current_view: string | null = null;
+  private auth = initialAuthenticationStatus();
   constructor(private readonly options: LiveProviderOptions) {}
+  authenticationStatus(): AuthenticationStatus { return { ...this.auth }; }
+  private reportAuthentication(status: AuthenticationStatus): void {
+    this.auth = { ...status };
+    console.log(JSON.stringify({ event: 'oscarplus_authentication', ...status }));
+  }
 
   async ensureAuthenticated(): Promise<void> {
     await this.close();
+    this.auth = initialAuthenticationStatus();
     this.browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
     this.context = await this.browser.newContext(existsSync(this.options.sessionPath)
       ? { storageState: this.options.sessionPath } : {});
     this.page = await this.context.newPage();
-    await this.page.goto(`${origin}/secure/ssoStudent.htm`, { waitUntil: 'domcontentloaded', timeout: 30000 });
-    if (new URL(this.page.url()).hostname === 'login.microsoftonline.com') await this.signIn();
-    if (!this.isAccountPage()) throw new Error('authentication_required');
+    this.reportAuthentication({ ...this.auth, stage: 'redirect', outcome: 'pending', updated_at: new Date().toISOString() });
+    try { await this.page.goto(`${origin}/secure/ssoStudent.htm`, { waitUntil: 'domcontentloaded', timeout: 30000 }); }
+    catch (error) {
+      const category = error instanceof Error && error.name === 'TimeoutError' ? 'authentication_redirect_timeout' : 'authentication_browser_error';
+      this.reportAuthentication({ ...this.auth, outcome: 'failed', error_category: category, updated_at: new Date().toISOString() });
+      throw new AuthenticationError(category);
+    }
+    await this.signIn();
     // Save renewed cookies even when the old session worked without an interactive sign-in.
     await this.context.storageState({ path: this.options.sessionPath });
     chmodSync(this.options.sessionPath, 0o600);
@@ -102,39 +116,48 @@ export class LiveOscarPlusProvider implements OscarPlusProvider {
 
   private async signIn(): Promise<void> {
     const page = this.page!;
-    await page.waitForTimeout(1000);
-    const picker = page.getByText(/pick an account/i).first();
-    if (await picker.isVisible().catch(() => false)) {
-      const tile = page.getByText(this.options.username, { exact: true }).first();
-      if (await tile.isVisible().catch(() => false)) await tile.click();
-      else await page.getByText(/use another account/i).first().click();
-    }
     const username = page.locator('input[name="loginfmt"], input[type="email"]').first();
-    if (await username.isVisible().catch(() => false)) {
-      await username.fill(this.options.username);
-      await page.locator('#idSIButton9, input[type="submit"]').first().click();
-    }
     const password = page.locator('input[name="passwd"], input[type="password"]').first();
-    await password.waitFor({ state: 'visible', timeout: 15000 });
-    await password.fill(this.options.password);
-    await page.locator('#idSIButton9, input[type="submit"]').first().click();
-    const call = page.getByText(/^Call \+/i).first();
-    await call.waitFor({ state: 'visible', timeout: 30000 }).catch(() => { throw new Error('authentication_required'); });
-    await call.click();
-    for (let attempt = 0; attempt < 60; attempt++) {
-      await page.waitForTimeout(2000);
-      if (this.isAccountPage()) {
-        await this.context!.storageState({ path: this.options.sessionPath });
-        chmodSync(this.options.sessionPath, 0o600);
-        return;
-      }
-      const body = (await page.locator('body').innerText()).toLowerCase();
-      if (body.includes('stay signed in')) {
-        const yes = page.locator('#idSIButton9');
-        if (await yes.isVisible().catch(() => false)) await yes.click();
-      }
-    }
-    throw new Error('authentication_required');
+    const call = page.getByText(/^Call\s+(?:\+|me\b)/i).first();
+    const otherMethods = page.getByText(/^(Sign in another way|Other ways to sign in|Use a different verification option)$/i).first();
+    const visible = (locator: ReturnType<Page['locator']>) => locator.isVisible().catch(() => false);
+    await authenticate({
+      now: () => Date.now(), pause: ms => page.waitForTimeout(ms),
+      snapshot: async (): Promise<AuthSnapshot> => {
+        const url = new URL(page.url());
+        if (this.isAccountPage()) return { route: 'account' };
+        if (url.hostname === 'www.oscarplusmcmaster.ca') return { route: 'oscarplus', loggedOut: url.pathname === '/notLoggedIn.htm' };
+        if (url.hostname !== 'login.microsoftonline.com') return { route: 'other' };
+        const body = await page.locator('body').innerText({ timeout: 5000 }).catch(() => '');
+        const [accountPicker, hasUsername, hasPassword, phoneOption, hasOtherMethods] = await Promise.all([
+          visible(page.getByText(/pick an account/i).first()), visible(username), visible(password), visible(call), visible(otherMethods),
+        ]);
+        return { route: 'microsoft', accountPicker, username: hasUsername, password: hasPassword,
+          phoneOption, otherMethods: hasOtherMethods, staySignedIn: /stay signed in/i.test(body),
+          credentialsRejected: /incorrect password|password is incorrect|account or password is incorrect/i.test(body),
+          verificationRejected: /authentication failed|verification failed|we (?:couldn't|could not|weren't able to) call|did not receive (?:a|your) response|didn't receive (?:a|your) response/i.test(body),
+          actionRequired: /more information required|keep your account secure|account has been locked|access has been blocked/i.test(body) };
+      },
+      act: async action => {
+        if (action === 'retry_sso') {
+          await this.context!.clearCookies({ domain: /^\.?(?:www\.)?oscarplusmcmaster\.ca$/i });
+          await page.goto(`${origin}/secure/ssoStudent.htm`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+        } else {
+          // Credentials and verification choices are only acted on at the Microsoft host.
+          if (new URL(page.url()).hostname !== 'login.microsoftonline.com') throw new Error('authentication_required');
+          if (action === 'choose_account') {
+            const tile = page.getByText(this.options.username, { exact: true }).first();
+            if (await visible(tile)) await tile.click();
+            else await page.getByText(/use another account/i).first().click();
+          } else if (action === 'enter_username' || action === 'enter_password') {
+            await (action === 'enter_username' ? username : password).fill(action === 'enter_username' ? this.options.username : this.options.password);
+            await page.locator('#idSIButton9, input[type="submit"]').first().click();
+          } else if (action === 'choose_phone') await call.click();
+          else if (action === 'other_methods') await otherMethods.click();
+          else if (action === 'stay_signed_in') await page.locator('#idSIButton9').click();
+        }
+      },
+    }, status => this.reportAuthentication(status));
   }
 
   private async dashboard(): Promise<Array<{ label: string; count: number }>> {

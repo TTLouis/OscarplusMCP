@@ -6,6 +6,7 @@ import { JobDatabase } from '../src/database.js';
 import { normalize, type RawPosting } from '../src/model.js';
 import { FixtureOscarPlusProvider, type OscarPlusProvider } from '../src/provider.js';
 import { SyncService } from '../src/sync.js';
+import { AuthenticationError } from '../src/authentication.js';
 
 const base: RawPosting = {
   posting_id: '247001', title: 'Electrical Engineer', employer: 'Acme', location: 'Hamilton',
@@ -226,5 +227,22 @@ describe('normalization and persistence', () => {
     await sync.run();
     vi.setSystemTime('2026-09-28T05:00:00.000Z');
     expect(sync.status()).toMatchObject({ cache_fresh: false, cache_age_seconds: 18000 });
+  });
+  it('persists a specific phone/redirect failure category without modifying cached jobs', async () => {
+    const database = db();
+    await new SyncService(database, new FixtureOscarPlusProvider([base]), undefined, 0).run();
+    const before = database.get(base.posting_id);
+    const provider: OscarPlusProvider = {
+      async ensureAuthenticated() { throw new AuthenticationError('authentication_redirect_timeout'); },
+      async listPostings() { return []; }, async getPosting() { throw new Error('unused'); },
+      authenticationStatus() { return { stage: 'session_retry', outcome: 'failed', phone_call_requested_at: null,
+        updated_at: '2026-09-28T00:01:00Z', error_category: 'authentication_redirect_timeout' }; },
+    };
+    const sync = new SyncService(database, provider, undefined, 0);
+    expect(await sync.run()).toMatchObject({ status: 'failed', error_category: 'authentication_redirect_timeout' });
+    expect(sync.status()).toMatchObject({ authentication_state: 'authentication_required',
+      authentication: { stage: 'session_retry', phone_call_requested_at: null, outcome: 'failed' }, cache_fresh: false });
+    expect(database.latestSync()?.error_category).toBe('authentication_redirect_timeout');
+    expect(database.get(base.posting_id)).toEqual(before);
   });
 });

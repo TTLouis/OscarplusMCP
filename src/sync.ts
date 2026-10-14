@@ -2,6 +2,7 @@ import type { JobDatabase } from './database.js';
 import { normalize } from './model.js';
 import type { OscarPlusProvider } from './provider.js';
 import { withBackoff } from './rate-limit.js';
+import { AuthenticationError } from './authentication.js';
 
 export type SyncResult = { status: 'success' | 'failed' | 'already_running' | 'provider_not_configured'; new_jobs?: number; changed_jobs?: number; deleted_jobs?: number; error_category?: string };
 export class SyncService {
@@ -17,7 +18,8 @@ export class SyncService {
     const listingCounts = this.database.listingCounts();
     return {
       provider_state: this.provider ? 'fixture_or_live' : 'not_configured',
-      authentication_state: !this.provider ? 'not_configured' : latest?.error_category === 'authentication_required' ? 'authentication_required' : 'provider_managed',
+      authentication_state: !this.provider ? 'not_configured' : latest?.error_category?.startsWith('authentication_') ? 'authentication_required' : 'provider_managed',
+      authentication: this.provider?.authenticationStatus?.() ?? null,
       last_attempted_sync: latest?.started_at ?? null,
       last_successful_sync: successful?.finished_at ?? null,
       known_job_count: this.database.count(),
@@ -65,7 +67,7 @@ export class SyncService {
       this.database.finishSync(id, this.clock(), 'success', counts.new_count, counts.changed_count, null, counts.deleted_count, seenIds.size);
       return { status: 'success', new_jobs: counts.new_count, changed_jobs: counts.changed_count, deleted_jobs: counts.deleted_count };
     } catch (error) {
-      const category = error instanceof Error && ['invalid_posting', 'posting_id_mismatch', 'provider_not_configured', 'request_timeout', 'authentication_required', 'posting_not_found', 'listing_unavailable', 'listing_incomplete', 'listing_limit_exceeded', 'application_status_unrecognized'].includes(error.message) ? error.message : 'provider_error';
+      const category = error instanceof AuthenticationError ? error.message : error instanceof Error && ['invalid_posting', 'posting_id_mismatch', 'provider_not_configured', 'request_timeout', 'authentication_required', 'posting_not_found', 'listing_unavailable', 'listing_incomplete', 'listing_limit_exceeded', 'application_status_unrecognized'].includes(error.message) ? error.message : 'provider_error';
       this.database.finishSync(id, this.clock(), 'failed', 0, 0, category);
       return { status: 'failed', error_category: category };
     } finally {
