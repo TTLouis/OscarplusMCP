@@ -13,6 +13,7 @@ WORKDIR /app
 COPY --from=build --chown=1000:1000 /app/package*.json ./
 COPY --from=build --chown=1000:1000 /app/node_modules ./node_modules
 COPY --from=build --chown=1000:1000 /app/dist ./dist
+COPY --chown=1000:1000 LICENSE NOTICE DISCLAIMER.md ./
 USER 1000:1000
 EXPOSE 3100
 CMD ["node", "dist/server.js"]

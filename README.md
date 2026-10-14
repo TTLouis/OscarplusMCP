@@ -32,5 +32,12 @@ The repository is private; you need access to clone it. Keep your credentials an
 - [Login, credentials and MFA](docs/getting-started/authentication.md)
 - [Documentation index](docs/README.md), including the tool reference, architecture and development guide
 - [Terms and publication review](docs/project/terms-review.md)
+- [Project disclaimer](DISCLAIMER.md)
 
-Independent, unofficial project; not affiliated with or endorsed by McMaster University or Orbis Communications. Use your own authorized account and follow applicable portal terms.
+## Licence
+
+The original project software is available under the [PolyForm Noncommercial License 1.0.0](LICENSE), with the required notices in [NOTICE](NOTICE). It is source-available for the licence's permitted noncommercial purposes; commercial uses outside those permissions are not licensed. Copies must retain the licence or its URL and the required notices. Third-party dependencies keep their own licences.
+
+## Disclaimer
+
+This is an independent, unofficial project, not affiliated with or endorsed by McMaster University or Orbis Communications. The software licence grants no portal access or rights to third-party postings. Cached information can change; verify live details before applying. The software is provided as is under the licence's warranty and liability terms. See the [full disclaimer](DISCLAIMER.md).

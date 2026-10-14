@@ -6,3 +6,6 @@
 !tsconfig.json
 !src/
 !src/*.ts
+!LICENSE
+!NOTICE
+!DISCLAIMER.md

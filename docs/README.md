@@ -17,5 +17,7 @@
 
 ## Project
 
+- [Licence](../LICENSE): PolyForm Noncommercial 1.0.0, with [required notices](../NOTICE).
+- [Disclaimer](../DISCLAIMER.md): affiliation, portal access, cached information and software limitations.
 - [Terms review](project/terms-review.md): reviewed sources and unresolved access/publication questions.
 - [Bundled skill](../skills/oscarplus/SKILL.md): reusable instructions for agents using the service.

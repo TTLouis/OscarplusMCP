@@ -16,7 +16,7 @@ The general website terms permit limited personal, educational or non-commercial
 
 These general terms do not explicitly authorize this adapter's authenticated automated ingestion. Whether they govern every part of OSCARplus, and whether additional student, co-op, employer or Orbis conditions apply, remain unresolved. A login or valid student account does not by itself resolve those questions.
 
-Publishing independently authored source code is a different action from publishing portal content. This repository includes no actual posting captures, application history, attachments, credentials, session state or branding assets. Source publication still needs an ownership and license decision; no open-source license has been selected here.
+Publishing independently authored source code is a different action from publishing portal content. This repository includes no actual posting captures, application history, attachments, credentials, session state or branding assets. The original project software now uses the [PolyForm Noncommercial License 1.0.0](../../LICENSE), with [required notices](../../NOTICE) and a [project disclaimer](../../DISCLAIMER.md). The licence permits its defined noncommercial purposes and restricts other uses; it is not an assertion of rights to third-party content or authorization for automated portal access. Third-party dependencies retain their own licences.
 
 ## Before public release or live use
 
