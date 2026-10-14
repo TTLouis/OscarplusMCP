@@ -1,5 +1,10 @@
 # OSCARplus MCP
 
+## Disclaimer
+
+> [!IMPORTANT]
+> This is an independent, unofficial project, not affiliated with or endorsed by McMaster University or Orbis Communications. The software licence grants no portal access or rights to third-party postings. Cached information can change; verify live details before applying. The software is provided as is under the licence's warranty and liability terms. See the [full disclaimer](DISCLAIMER.md).
+
 Find and explore McMaster Engineering Co-op postings with your AI assistant. OSCARplus MCP keeps a private local copy of the postings available to your account so you can search by role, employer, location, term and deadline, then read the full details in your assistant.
 
 ## What you can do
@@ -37,7 +42,3 @@ The repository is private; you need access to clone it. Keep your credentials an
 ## Licence
 
 The original project software is available under the [PolyForm Noncommercial License 1.0.0](LICENSE), with the required notices in [NOTICE](NOTICE). It is source-available for the licence's permitted noncommercial purposes; commercial uses outside those permissions are not licensed. Copies must retain the licence or its URL and the required notices. Third-party dependencies keep their own licences.
-
-## Disclaimer
-
-This is an independent, unofficial project, not affiliated with or endorsed by McMaster University or Orbis Communications. The software licence grants no portal access or rights to third-party postings. Cached information can change; verify live details before applying. The software is provided as is under the licence's warranty and liability terms. See the [full disclaimer](DISCLAIMER.md).
