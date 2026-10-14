@@ -22,12 +22,26 @@ Stored fields include ID, source, title, employer, division, location, remote an
 
 ## Docker deployment
 
-From the repository directory:
+The repository is currently private; other users need GitHub read access or their own authorized copy. The following commands target a Linux Docker host with Docker Compose installed. Clone the repository and enter its directory first:
 
 ```sh
-cp .env.example .env
+git clone https://github.com/TTLouis/OscarplusMCP.git
+cd OscarplusMCP
+```
+
+Prepare the local environment and bind-mount directories. The container runs as UID/GID `1000:1000`; both directories must be writable by that user. On a fresh Linux deployment:
+
+```sh
+test -e .env || cp .env.example .env
 chmod 600 .env
-# Loopback binding is the default; keep it for local use.
+sudo install -d -m 700 -o 1000 -g 1000 data auth-profile
+```
+
+Edit `.env` locally. The example starts with live ingestion and automatic sync disabled. To enable scheduled ingestion for your own authorized account, populate `OSCARPLUS_USERNAME` and `OSCARPLUS_PASSWORD`, then set `LIVE_PROVIDER_ENABLED=true` and `AUTO_SYNC=true`. Keep `SYNC_INTERVAL_HOURS=4`, `OSCARPLUS_BATCH_LIMIT=500` unless your accessible listing count requires a larger supported limit, and `LAN_BIND_IP=127.0.0.1` for local use. Do not paste credentials into an agent chat or shell command history.
+
+Be ready to answer the registered MFA phone when starting the first live sync:
+
+```sh
 docker compose up -d --build
 docker compose ps
 curl http://127.0.0.1:3100/health
@@ -35,7 +49,80 @@ curl http://127.0.0.1:3100/health
 
 `compose.yml` mounts `./data` at `/data` and `./auth-profile` at `/auth-profile`, so rebuilding preserves SQLite and the authorized browser state. Keep both directories private and back them up securely. The example binds to loopback by default; set `LAN_BIND_IP` to the VM's private LAN address for LAN/VPN clients. Do not port-forward this unauthenticated v0.1 service to the public internet. Nginx Proxy Manager can be configured later after a private hostname is chosen; restrict any proxy host to trusted LAN/VPN clients.
 
-The `.env.example` contains empty credential placeholders. Credentials in `.env` are available only inside the container environment, are never logged, are never written to SQLite, and are never returned by tools. `.env`, `auth-profile`, database files, and HAR captures are excluded from Git and Docker build context. The saved `auth-profile/session.json` contains authenticated cookies and tokens; keep its directory at mode `700` and the file at mode `600`. Set `LIVE_PROVIDER_ENABLED=true`, `OSCARPLUS_BATCH_LIMIT=500`, `AUTO_SYNC=true`, and `SYNC_INTERVAL_HOURS=4` for full scheduled ingestion. The session file must be readable and writable by the container user (UID 1000) so it can renew the saved sign-in.
+The `.env.example` contains empty credential placeholders. Your actual username and password are stored in your local `.env` and injected into the container environment by Compose. The application does not log them, write them to SQLite, or return them through MCP. Host/container administrators can still access those secrets; this is not a Docker Secrets integration. `.env`, `auth-profile`, database files, and HAR captures are excluded from Git and Docker build context. The saved `auth-profile/session.json` contains authenticated cookies and tokens; keep its directory at mode `700` and the file at mode `600`. The session file must be readable and writable by the container user (UID 1000) so it can renew the saved sign-in.
+
+### Login and phone-call MFA
+
+The live provider requires both credential environment variables at startup, even when a saved session exists. It first loads `auth-profile/session.json` if present and enters OSCARplus through the student SSO link. If Microsoft requires a sign-in, the provider enters the username and password, selects the visible **Call +…** option, and waits roughly two minutes for the account holder to answer and complete verification. No phone number is configured in `.env`; the call uses the method already registered with Microsoft.
+
+Successful authentication saves or refreshes the session for later syncs. A valid saved session can avoid another password/MFA interaction. Expired sessions can require another call. The current adapter specifically implements the phone-call flow; accounts showing only authenticator approval, SMS, passkeys or another flow may fail with `authentication_required` and need an adapter change. It does not bypass MFA.
+
+### Copyable deployment and skill setup prompt
+
+Paste this into an agent with terminal access to your deployment host and permission to configure your MCP client. Replace the bracketed values. A skill supplies instructions; the running MCP service supplies tools. Both must be configured.
+
+```text
+Deploy OscarplusMCP from https://github.com/TTLouis/OscarplusMCP.git on
+[local Linux host or SSH host] in [repository directory], then connect my
+[MCP client name] and install the bundled oscarplus agent skill in
+[the skills directory supported by my agent].
+
+Read README.md, docs/TERMS_REVIEW.md, compose.yml and .env.example first.
+Use my own authorized account and respect applicable portal terms. If the
+private repository is inaccessible, report that rather than using someone
+else's credentials. Preserve existing deployment data and configuration.
+
+Check Docker/Compose availability and port 3100. Clone or update the source
+without discarding local changes. Prepare data/ and auth-profile/ so the
+container's UID/GID 1000:1000 can write to them, with private permissions.
+Create .env from .env.example only if it does not already exist. Have me
+enter OSCARPLUS_USERNAME and OSCARPLUS_PASSWORD directly into the local
+file; never ask me to paste them into chat, print .env, run a command that
+exposes resolved secrets, or commit secrets, sessions or cached postings.
+
+Configure the live provider and automatic sync for this deployment, retain
+the four-hour interval, and tell me when the first sync is about to start
+so I can answer Microsoft's MFA phone call. This adapter needs a registered
+Call +… method; stop and explain if my account uses an unsupported flow.
+Keep the HTTP endpoint on loopback by default. For a remote server, prefer
+an SSH tunnel or an existing trusted VPN; do not expose port 3100 publicly.
+
+Build and start with Docker Compose. Check /health, then use
+oscarplus_sync_status to verify a successful ingestion, fresh cache and
+listing counts. Health alone is not proof of successful authentication or
+fresh data. Diagnose categorized failures without dumping private state.
+Do not repeatedly restart a failed login and trigger more MFA calls.
+
+Register the Streamable HTTP URL http://127.0.0.1:3100/mcp with my MCP client
+using its supported configuration, adjusted for where that client runs.
+If the server is remote, explain that the client's 127.0.0.1 is its own
+machine and configure the tunnel or trusted-network endpoint accordingly.
+Discover the available OSCARplus tools and perform one small cached query.
+
+Copy skills/oscarplus/ to the agent's supported skills directory as
+oscarplus/, preserving SKILL.md. Confirm the agent discovers it, reload
+the agent if needed, and show me a sample prompt to invoke it. If the agent
+does not support skills, explain how to use the file as project instructions.
+Do not claim the skill creates the MCP connection or grants portal access.
+
+Report the repository version, service health, cache status, MCP URL,
+skill installation path and any remaining blocker. Do not apply to jobs,
+upload documents, modify my application tracker, or publish this repository.
+```
+
+## Bundled agent skill
+
+[skills/oscarplus/SKILL.md](skills/oscarplus/SKILL.md) teaches an agent to search the cache, inspect full posting captures, check freshness, and report evidence boundaries. Install the whole `skills/oscarplus/` directory under the skills directory supported by your agent; the resulting layout should be `<skills-directory>/oscarplus/SKILL.md`. Use your client's supported skill discovery/reload process. This repository does not install a skill globally or modify client configuration automatically.
+
+After connecting the MCP and installing the skill, try:
+
+```text
+Use the oscarplus skill to find electrical or embedded engineering co-op
+postings for [term]. Check cache freshness first, then show up to five
+matches with posting IDs, employers, locations, deadlines and capture times.
+Read the full details before assessing fit. Flag unknown eligibility and
+stale or unlisted records. Do not apply or change my application tracker.
+```
 
 ## MCP connection
 
