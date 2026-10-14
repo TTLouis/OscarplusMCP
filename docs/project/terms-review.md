@@ -1,8 +1,10 @@
-# Publication review
+# Publication and use review
 
 [Back to the project overview](../../README.md)
 
 Reviewed October 14, 2026. This is a limited source review, not legal clearance.
+
+The source repository is public. This review records the sources checked and the ongoing boundaries for publishing the software and using it with the portal; publication does not resolve the access questions below.
 
 ## Sources checked
 
@@ -18,11 +20,11 @@ These general terms do not explicitly authorize this adapter's authenticated aut
 
 Publishing independently authored source code is a different action from publishing portal content. This repository includes no actual posting captures, application history, attachments, credentials, session state or branding assets. The original project software now uses the [PolyForm Noncommercial License 1.0.0](../../LICENSE), with [required notices](../../NOTICE) and a [project disclaimer](../../DISCLAIMER.md). The licence permits its defined noncommercial purposes and restricts other uses; it is not an assertion of rights to third-party content or authorization for automated portal access. Third-party dependencies retain their own licences.
 
-## Before public release or live use
+## Ongoing publication and use responsibilities
 
 - Review any terms accepted inside the account and obtain clarification or permission for automated access where needed.
 - Keep portal content, cached data and account state private. A software license cannot license third-party postings or grant portal access.
 - Use an accurate, unaffiliated description. Changing the name or omitting the integration's behavior does not change the terms.
-- Review the staged files as well as `.gitignore`; ignored files can still be force-added or already tracked. This release repository starts with fresh history and contains no copied source Git history.
+- Review files in each commit before pushing. `.gitignore` does not remove files that are already tracked, and ignored files can still be force-added.
 
 The live provider and automatic sync are disabled in the example configuration. The HTTP service has no authentication and must remain on a trusted local/private network.

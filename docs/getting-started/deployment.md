@@ -2,7 +2,7 @@
 
 [Back to the project overview](../../README.md)
 
-Run the service on your own **Windows PC with Docker Desktop**, or on a Linux Docker host. A separate server is optional. The repository is currently private; other users need GitHub read access or their own authorized copy.
+Run the service on your own **Windows PC with Docker Desktop**, or on a Linux Docker host. A separate server is optional. The source repository is public; each deployment needs its own authorized OSCARplus account.
 
 ## Choose your platform
 

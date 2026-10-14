@@ -15,7 +15,7 @@ Read README.md, docs/getting-started/deployment.md,
 docs/getting-started/authentication.md, docs/getting-started/agent-setup.md,
 docs/project/terms-review.md, compose.yml and .env.example first.
 Use my own authorized account and respect applicable portal terms. If the
-private repository is inaccessible, report that rather than using someone
+source repository is inaccessible, report that rather than using someone
 else's credentials. Preserve existing deployment data and configuration.
 
 Detect my OS and choose the matching deployment-guide instructions.

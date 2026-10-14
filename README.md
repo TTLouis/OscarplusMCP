@@ -30,7 +30,7 @@ Use the oscarplus skill to find embedded engineering co-op postings for
 locations and deadlines. Read the full details before assessing fit.
 ```
 
-The repository is private; you need access to clone it. Keep your credentials and posting data private, and run the service locally or on a trusted private network.
+The source repository is public. Keep your credentials, saved sessions and posting data private, and run the service locally or on a trusted private network.
 
 ## Learn more
 
